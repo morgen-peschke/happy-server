@@ -9,7 +9,7 @@ import org.typelevel.log4cats.slf4j.Slf4jFactory
 
 object CliApp extends IOApp {
 
-  implicit val logging: LoggerFactory[IO] = Slf4jFactory[IO]
+  implicit val logging: LoggerFactory[IO] = Slf4jFactory.create[IO]
 
   override def run(args: List[String]): IO[ExitCode] = {
     val logger = LoggerFactory.getLogger[IO]

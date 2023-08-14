@@ -61,18 +61,10 @@ object core extends CommonModule {
 
   override def ivyDeps =
     Agg(
-      ivy"com.beachape::enumeratum:1.7.0",
-      ivy"com.lihaoyi::sourcecode:0.3.0",
       ivy"com.monovore::decline:2.3.0",
-      ivy"de.marhali:json5-java:2.0.0",
-      ivy"io.circe::circe-core:0.14.1",
-      ivy"io.circe::circe-parser:0.14.1",
       ivy"is.cir::ciris:3.1.0",
-      ivy"org.http4s::http4s-circe:1.0.0-M39",
-      ivy"org.http4s::http4s-dsl:1.0.0-M39",
-      ivy"org.http4s::http4s-ember-client:1.0.0-M39",
-      ivy"org.http4s::http4s-ember-server:1.0.0-M39",
-      ivy"org.rudogma::supertagged:2.0-RC2",
+      ivy"org.http4s::http4s-dsl:1.0.0-M40",
+      ivy"org.http4s::http4s-ember-server:1.0.0-M40",
       ivy"org.typelevel::log4cats-slf4j:2.5.0"
     )
 

@@ -12,7 +12,7 @@ object SetupServer {
     SetupServer.setup[F](config).useForever
 
   def setup[F[_]: Async: Network: LoggerFactory](config: Config): Resource[F, Server] = {
-    val app = Logger.httpApp[F](logHeaders = true, logBody = false)(HappyApp.default[F])
+    val app = Logger.httpApp[F](logHeaders = false, logBody = false)(HappyApp.default[F])
 
     Resource.eval(LoggerFactory[F].fromClass(classOf[Server])).flatMap { serverLogger =>
       EmberServerBuilder
