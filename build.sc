@@ -1,15 +1,8 @@
-import $ivy.`com.goyeau::mill-scalafix::0.2.10`
-import com.goyeau.mill.scalafix.ScalafixModule
 import mill._, scalalib._, scalafmt._
 import mill.scalalib.publish._
 
-val Scala13 = "2.13.8"
-
-trait StyleModule extends ScalafmtModule with ScalafixModule {
-  override def scalafixIvyDeps = super.scalafixIvyDeps() ++ Agg(
-    ivy"com.github.liancheng::organize-imports:0.6.0",
-    ivy"org.typelevel::typelevel-scalafix:0.1.5"
-  )
+trait CommonModule extends ScalaModule {
+  override def scalaVersion: T[String] = "2.13.12"
 
   override def scalacOptions =
     super.scalacOptions() ++ Seq(
@@ -31,12 +24,21 @@ trait StyleModule extends ScalafmtModule with ScalafixModule {
     ivy"com.olegpy::better-monadic-for:0.3.1",
     ivy"org.typelevel:::kind-projector:0.13.2"
   )
+
 }
 
-trait CommonModule
-    extends ScalaModule
-    with StyleModule
-    with PublishModule {
+object core extends ScalaModule with CommonModule with ScalafmtModule with PublishModule {
+
+  override def ivyDeps =
+    Agg(
+      ivy"com.monovore::decline:2.3.0",
+      ivy"is.cir::ciris:3.1.0",
+      ivy"org.http4s::http4s-dsl:1.0.0-M40",
+      ivy"org.http4s::http4s-ember-server:1.0.0-M40",
+      ivy"org.typelevel::log4cats-slf4j:2.5.0"
+    )
+
+  override def runIvyDeps = Agg(ivy"ch.qos.logback:logback-classic:1.2.10")
 
   def publishVersion: T[String] = "0.1.0"
 
@@ -54,23 +56,8 @@ trait CommonModule
       )
     )
   )
-}
 
-object core extends CommonModule {
-  override def scalaVersion: T[String] = Scala13
-
-  override def ivyDeps =
-    Agg(
-      ivy"com.monovore::decline:2.3.0",
-      ivy"is.cir::ciris:3.1.0",
-      ivy"org.http4s::http4s-dsl:1.0.0-M40",
-      ivy"org.http4s::http4s-ember-server:1.0.0-M40",
-      ivy"org.typelevel::log4cats-slf4j:2.5.0"
-    )
-
-  override def runIvyDeps = Agg(ivy"ch.qos.logback:logback-classic:1.2.10")
-
-  object test extends Tests with TestModule.Munit with StyleModule {
+  object test extends ScalaTests with CommonModule with TestModule.Munit {
     override def ivyDeps: T[Agg[Dep]] = super.ivyDeps() ++ Agg(
       ivy"org.scalacheck::scalacheck:1.17.0",
       ivy"org.scalameta::munit-scalacheck:0.7.29",
