@@ -10,13 +10,13 @@ import com.comcast.ip4s
 import com.comcast.ip4s.{Host, Ipv6Address, Port}
 import com.monovore.decline.{Argument, Command, Opts}
 import fs2.io.file.Path
+import org.http4s.Status
+import org.typelevel.ci.CIString
 import peschke.happy.Config.TLSConfig
 
-final case class Config(host: Host, port: Port, tlsConfig: Option[TLSConfig])
+final case class Config(host: Host, port: Port, tlsConfig: Option[TLSConfig], response: FixedResponse)
 object Config {
-  final case class TLSConfig(keyStorePath: Path,
-                             storePassword: String,
-                             keyPassword: String)
+  final case class TLSConfig(keyStorePath: Path, storePassword: String, keyPassword: String)
 
   trait Loader[F[_]] {
     def load: F[Config]
@@ -67,9 +67,32 @@ object Config {
         TLSConfig(path, storePass, keyPass)
       }.orNone
 
+    private val responseStatus: Opts[Status] =
+      Opts
+        .option[Int](long = "status", help = "The status to be returned, defaults to 200")
+        .withDefault(200)
+        .mapValidated(Status.fromInt(_).leftMap(_.message).toValidatedNel)
+
+    private val responseBody: Opts[Option[String]] =
+      Opts
+        .option[String](long = "body", help = "The response body, defaults to no body")
+        .orNone
+
+    private val responseHeaders: Opts[List[(CIString, String)]] =
+      Opts
+        .options[String](long = "header", help = "Any extra response headers", metavar = "name:value")
+        .orEmpty
+        .mapValidated(_.traverse(_.split(':').toList match {
+          case name :: rest => (CIString(name) -> rest.mkString(":")).validNel
+          case Nil          => "Empty input is invalid".invalidNel
+        }))
+
+    private val responseOpts: Opts[FixedResponse] =
+      (responseStatus, responseBody, responseHeaders).mapN(FixedResponse)
+
     override def load: F[Config] = {
       val command = Command(name = "happy-server", header = "Happy API Server")(
-        (hostOpt, portOpt, tlsConfig).mapN(Config.apply)
+        (hostOpt, portOpt, tlsConfig, responseOpts).mapN(Config.apply)
       )
       command.parse(args, sys.env).fold(Console[F].errorln(_) >> die, _.pure[F])
     }
@@ -94,7 +117,8 @@ object Config {
       (
         host,
         port,
-        (tlsStorePath, tlsStorePass, tlsKeyPass).mapN(TLSConfig.apply).option
+        (tlsStorePath, tlsStorePass, tlsKeyPass).mapN(TLSConfig.apply).option,
+        ciris.default(FixedResponse(Status.Ok, None, Nil))
       ).mapN(Config.apply).load[F]
     }
   }

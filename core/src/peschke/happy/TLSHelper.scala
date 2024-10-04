@@ -1,6 +1,6 @@
 package peschke.happy
 
-import cats.{Applicative, Functor, ~>}
+import cats.{~>, Applicative, Functor}
 import cats.syntax.all._
 import fs2.io.net.Network
 import org.http4s.ember.server.EmberServerBuilder
@@ -14,12 +14,13 @@ trait TLSHelper[F[_], C[_]] {
     builder => nt(f.configure(builder))
   }
 }
-object TLSHelper {
-  def noOp[F[_] : Applicative, C[_]]: TLSHelper[F, C] = _.pure[F]
+object TLSHelper            {
+  def noOp[F[_]: Applicative, C[_]]: TLSHelper[F, C] = _.pure[F]
 
-  def default[F[_] : Network : Functor](tlsConfig: TLSConfig): TLSHelper[F, F] =
+  def default[F[_]: Network: Functor](tlsConfig: TLSConfig): TLSHelper[F, F] =
     builder =>
-      Network[F].tlsContext.fromKeyStoreFile(
+      Network[F]
+        .tlsContext.fromKeyStoreFile(
           tlsConfig.keyStorePath.toNioPath,
           tlsConfig.storePassword.toCharArray,
           tlsConfig.keyPassword.toCharArray

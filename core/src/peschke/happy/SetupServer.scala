@@ -20,12 +20,12 @@ object SetupServer {
     val tlsHelper = config.tlsConfig.fold(TLSHelper.noOp[F, F])(TLSHelper.default[F](_)).mapK[Resource[F, *]]
     for {
       serverLogger <- Resource.eval(LoggerFactory[F].fromClass(classOf[Server]))
-      server <- EmberServerBuilder
+      server       <- EmberServerBuilder
         .default[F]
         .withHost(config.host)
         .withPort(config.port)
         .withLogger(serverLogger)
-        .withHttpApp(httpApp[F](logHeaders = false, logBody = false)(HappyApp.default[F]))
+        .withHttpApp(httpApp[F](logHeaders = false, logBody = false)(HappyApp.default[F](config.response)))
         .configureTLS(tlsHelper)
         .flatMap(_.build)
     } yield server
